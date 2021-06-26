@@ -6,8 +6,19 @@ from core.data.models.user.model import User
 
 router = APIRouter(prefix="/user", tags=["user"])
 
+# TODO:// Write helper function for processing db returns
+@router.get("/all", response_description="all users retrieved")
+async def get_all_user_data() -> dict:
+    success, users = await db.get_all_users()
+    for user in users:
+        user["_id"] = str(user["_id"])
+    return {
+        "success": success,
+        "users": users
+    }
+
 # TODO:// Write null checks for these methods
-@router.post("/", response_description="user retrieved")
+@router.get("/get", response_description="user retrieved")
 async def get_user_data(user_id: str) -> dict:
     user_id = jsonable_encoder(user_id)
     success, user_data = await db.get_user(user_id)
@@ -35,6 +46,16 @@ async def update_user_data(user: User = Body(...)) -> dict:
     success, user_data = await db.update_user(user)
     user_data['_id'] = str(user_data["_id"])
     print(success, user_data)
+    return {
+        "success": success,
+        "user": user_data
+    }
+
+@router.post("/delete", response_description="user deleted")
+async def delete_user(user_id: str) -> dict:
+    user_id = jsonable_encoder(user_id)
+    success, user_data = await db.delete_user(user_id)
+    user_data["_id"] = str(user_data["_id"])
     return {
         "success": success,
         "user": user_data

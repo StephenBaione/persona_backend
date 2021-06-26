@@ -19,11 +19,13 @@ def user_helper(user) -> dict:
         "age": user["age"]
     }
 
-async def retrieve_users():
+async def get_all_users():
     users = []
     async for user in user_collection.find():
         users.append(user)
-    return users
+    if len(users) == 0:
+        raise Exception(f"Error in getting all users")
+    return True, users
 
 # TODO:// Update service.routes.user.py so that it checks for null.
 # Just return data as opposed to list object
@@ -55,3 +57,10 @@ async def update_user(user_data: dict) -> dict:
     if not check_user(old_data, new_data):
         raise Exception(f"Unable to update user {old_data}")
     return [True, new_data]
+
+async def delete_user(user_id: str) -> dict:
+    user_data = await user_collection.find_one({"_id": ObjectId(user_id)})
+    if not user_data:
+        raise Exception(f"Error in deleting user with Id={user_id}")
+    result = await user_collection.delete_one({"_id": ObjectId(user_id)})
+    return [True, user_data]
