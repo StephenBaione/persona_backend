@@ -3,10 +3,12 @@ from typing import Optional
 from fastapi import FastAPI
 
 from service.routes.user import router as UserRouter
+from external_services.spotify.routes.auth import router as SpotifyAuthRouter
 
 app = FastAPI()
 
 app.include_router(UserRouter)
+app.include_router(SpotifyAuthRouter)
 
 @app.get("/")
 async def read_root():
