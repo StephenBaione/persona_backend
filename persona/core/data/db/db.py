@@ -42,6 +42,13 @@ async def get_user_by_field(field, value):
         raise Exception(f"Error in finding use with {field}=={value}")
     return [True, user]
 
+async def get_user_field(user_id, field_name):
+    user = await user_collection.find_one({"_id": user_id})
+    try:
+        return user[field_name]
+    except Exception as e:
+        return None
+
 async def add_user(user_data: dict) -> dict:
     user = await user_collection.insert_one(user_data)
     new_user = await user_collection.find_one({"firstname": user_data["firstname"]})

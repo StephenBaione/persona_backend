@@ -8,4 +8,6 @@ class User(BaseModel):
     email: EmailStr = Field(...)
     password_hash: str = Field(...)
     age: int = Field(..., gt=13)
-
+    is_active: bool = Field(...)
+    credentials: list = Field(...)
+    ketchain: dict = Field(...)
