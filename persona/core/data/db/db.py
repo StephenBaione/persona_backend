@@ -69,3 +69,11 @@ async def delete_user(user_id: str) -> dict:
         raise Exception(f"Error in deleting user with Id={user_id}")
     result = await user_collection.delete_one({"_id": ObjectId(user_id)})
     return [True, user_data]
+
+async def delete_all_users() -> dict:
+    try:
+        await user_collection.delete_many({})
+        # TODO:// Implement check
+        return True
+    except Exception as e:
+        raise Exception(f"Error deleting users\n{e}")
