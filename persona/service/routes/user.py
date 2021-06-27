@@ -65,6 +65,13 @@ async def delete_user(user_id: str) -> dict:
         "user": user_data
     }
 
+@router.post("/delete_all", response_description="all users deleted")
+async def delete_all_users() -> dict:
+    success = await db.delete_all_users()
+    return {
+        "success": success
+    }
+
 @router.post("/auth/login", response_model=Token, response_description="login user")
 async def login_user(username: str = Body(...), password: str = Body(...)):
     success, user = await db.get_user_by_field("username", username)
