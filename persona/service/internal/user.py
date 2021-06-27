@@ -2,8 +2,8 @@ from core.security.auth import user_auth
 from core.data.db import db
 
 async def handle_user_auth(username, password):
-    success, user = await db.get_user_by_field("username", username)
-    if not success:
+    user = await db.get_user_by_field("username", username)
+    if not user:
         return None
     password_hash = user["password_hash"]
     result = await user_auth.authenticate_user(password, password_hash)
