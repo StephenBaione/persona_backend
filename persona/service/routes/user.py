@@ -1,7 +1,6 @@
 from typing import Optional
-from fastapi import APIRouter, Body, HTTPException, status
+from fastapi import APIRouter, Body, HTTPException, status, Header
 from fastapi.encoders import jsonable_encoder
-from fastapi.param_functions import Header
 
 from core.data.db import db
 from core.data.models.user.model import User

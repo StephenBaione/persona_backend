@@ -10,4 +10,4 @@ class User(BaseModel):
     age: int = Field(..., gt=13)
     is_active: bool = Field(...)
     credentials: list = Field(...)
-    ketchain: dict = Field(...)
+    keychain: dict = Field(...)
