@@ -48,11 +48,9 @@ async def validate_user_access(token, cfg):
         "user_crud": ["admin"]
     }
     user_credentials = await oauth.get_token_credentials(token)
-    print(user_credentials)
     if user_credentials:
         valid_credentials = credentials_cfg[cfg]
-        async for cred in user_credentials:
-            print(cred)
+        for cred in user_credentials:
             if cred in valid_credentials:
                 return True
     return False

@@ -30,7 +30,6 @@ async def get_all_users():
 # TODO:// Update service.routes.user.py so that it checks for null.
 # Just return data as opposed to list object
 async def get_user(user_id: dict):
-    test_user = await user_collection.find_one({"firstname": "test"})
     user = await user_collection.find_one({"_id": ObjectId(user_id)})
     if user is None:
         raise Exception(f"Error in getting user with Id={user_id}")
@@ -43,11 +42,8 @@ async def get_user_by_field(field, value):
     return [True, user]
 
 async def get_user_field(user_id, field_name):
-    user = await user_collection.find_one({"_id": user_id})
-    try:
-        return user[field_name]
-    except Exception as e:
-        return None
+    success, user = await get_user(user_id)
+    return user[field_name] if user else None
 
 async def add_user(user_data: dict) -> dict:
     user = await user_collection.insert_one(user_data)

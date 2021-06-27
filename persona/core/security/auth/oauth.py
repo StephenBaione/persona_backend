@@ -34,10 +34,8 @@ async def create_access_token(data: dict, expires_delta: Optional[timedelta] = N
 async def get_token_credentials(token):
     try:
         decoded_token = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
-        print(decoded_token)
         user_id = decoded_token["_id"]
         user_credentials = await db.get_user_field(user_id, "credentials")
-        print(user_credentials)
         return user_credentials
     except Exception as e:
         return None

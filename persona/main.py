@@ -17,5 +17,3 @@ async def read_root():
 @app.get("/test/{test_id}")
 async def read_item(test_id: int, q: Optional[str] = None):
     return {"test_id": test_id, "q": q}
-
-
