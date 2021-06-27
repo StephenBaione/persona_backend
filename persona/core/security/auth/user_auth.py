@@ -17,13 +17,13 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-def verify_password(text_password: str, hashed_password: str):
+async def verify_password(text_password: str, hashed_password: str):
     return pwd_context.verify(text_password, hashed_password)
 
-def get_password_hash(text_password: str):
-    return pwd_context.hash(password)
+async def get_password_hash(text_password: str):
+    return pwd_context.hash(text_password)
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+async def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -31,9 +31,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
         expire = datetime.utcnow() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    return {"access_token": encoded_jwt, "token_type": "bearer"}
 
-def authenticate_user(username: str, password: str, user: User):
-    if not verify_password(password, user.password_hash):
+async def authenticate_user(password: str, user: User):
+    if not await verify_password(password, user["password_hash"]):
         return False
     return True
