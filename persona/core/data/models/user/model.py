@@ -6,5 +6,6 @@ class User(BaseModel):
     lastname: str = Field(...)
     username: str = Field(...)
     email: EmailStr = Field(...)
+    password_hash: str = Field(...)
     age: int = Field(..., gt=13)
 

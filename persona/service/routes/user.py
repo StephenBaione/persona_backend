@@ -1,8 +1,11 @@
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, Body, HTTPException, status
 from fastapi.encoders import jsonable_encoder
 
 from core.data.db import db
 from core.data.models.user.model import User
+from core.data.models.auth.token import Token
+
+from core.security.auth import user_auth
 
 router = APIRouter(prefix="/user", tags=["user"])
 
@@ -32,9 +35,10 @@ async def get_user_data(user_id: str) -> dict:
 @router.post("/add", response_description="user added")
 async def add_user_data(user: User = Body(...)) -> dict:
     user = jsonable_encoder(user)
+    # TODO:// Remove hashing password. This should be done in signup endpoint
+    user["password_hash"] = await user_auth.get_password_hash(user["password_hash"])
     success, user_data = await db.add_user(user)
     user_data['_id'] = str(user_data["_id"])
-    print(success, user_data)
     return {
         "success": success,
         "user": user_data
@@ -60,3 +64,18 @@ async def delete_user(user_id: str) -> dict:
         "success": success,
         "user": user_data
     }
+
+@router.post("/auth/login", response_model=Token, response_description="login user")
+async def login_user(username: str = Body(...), password: str = Body(...)):
+    success, user = await db.get_user_by_field("username", username)
+    password_hash = user["password_hash"]
+    result = await user_auth.authenticate_user(password, user)
+    if result:
+        user["_id"] = str(user["_id"])
+        token = await user_auth.create_access_token(user)
+        return token
+    raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )

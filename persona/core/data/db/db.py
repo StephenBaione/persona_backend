@@ -32,9 +32,14 @@ async def get_all_users():
 async def get_user(user_id: dict):
     test_user = await user_collection.find_one({"firstname": "test"})
     user = await user_collection.find_one({"_id": ObjectId(user_id)})
-    print(user)
     if user is None:
         raise Exception(f"Error in getting user with Id={user_id}")
+    return [True, user]
+
+async def get_user_by_field(field, value):
+    user = await user_collection.find_one({field: value})
+    if user is None:
+        raise Exception(f"Error in finding use with {field}=={value}")
     return [True, user]
 
 async def add_user(user_data: dict) -> dict:
