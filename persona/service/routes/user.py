@@ -72,6 +72,9 @@ async def delete_all_users() -> dict:
         "success": success
     }
 
+# TODO:// Make password in post requests secure
+# TODO:// Move authentication to separate router
+# TODO:// Store Token in database
 @router.post("/auth/login", response_model=Token, response_description="login user")
 async def login_user(username: str = Body(...), password: str = Body(...)):
     success, user = await db.get_user_by_field("username", username)
@@ -86,3 +89,24 @@ async def login_user(username: str = Body(...), password: str = Body(...)):
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+@router.post("/auth/signup", response_model=Token, response_description="login user")
+async def signup_user(user_data: User = Body(...)):
+    # Hash password
+    # Create user in db
+    # Create and return auth token
+    import requests
+    user_data = jsonable_encoder(user_data)
+    password = user_data['password_hash']
+    password_hash = await user_auth.get_password_hash(password)
+    user_data["password_hash"] = password_hash
+    success, user = await db.add_user(user_data)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unable to signup user",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    user["_id"] = str(user["_id"])
+    token = await user_auth.create_access_token(user)
+    return token
