@@ -57,11 +57,12 @@ async def update_user(user_data: dict) -> dict:
     def check_user(old_data: dict, new_data: dict):
         for (key, val) in old_data.items():
             if val != new_data[key]:
-                return False
-        return True
-    old_data = await user_collection.find_one({"firstname": user_data["firstname"]})
+                return True
+        return False
+    user_id = user_data.pop("_id")
+    old_data = await user_collection.find_one({"_id": ObjectId(user_id)})
     user = await user_collection.replace_one({"_id": old_data["_id"]}, user_data)
-    new_data = await user_collection.find_one({"firstname": user_data["firstname"]})
+    new_data = await user_collection.find_one({"_id": ObjectId(user_id)})
     if not check_user(old_data, new_data):
         raise Exception(f"Unable to update user {old_data}")
     return new_data

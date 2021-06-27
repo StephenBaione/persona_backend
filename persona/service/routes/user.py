@@ -144,3 +144,27 @@ async def signup_user(user_data: User = Body(...)):
     user["_id"] = str(user["_id"])
     token = await user_auth.create_access_token(user)
     return token
+
+@router.post("/auth/keychain/add", response_description="Add to User keychain")
+async def add_to_keychain(user_id: str = Body(...), token: Token = Body(...), key: dict = Body(...)):
+    user_id = jsonable_encoder(user_id)
+    token = jsonable_encoder(token)
+    if not await user_auth.validate_user_access(token["access_token"], "user_crud"):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    key = jsonable_encoder(key)
+    user = await db.get_user(user_id)
+    if user:
+        keychain = user["keychain"]
+        for key, val in key.items():
+            keychain[key] = val
+        user["keychain"] = keychain
+        user = await db.update_user(user)
+        user["_id"] = str(user["_id"])
+        return {
+            "success": True,
+            "user_data": user
+        }
