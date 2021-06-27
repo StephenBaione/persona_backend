@@ -21,11 +21,11 @@ async def get_all_user_data(token: str = Header(None)) -> dict:
             detail="Invalid Credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    success, users = await db.get_all_users()
+    users = await db.get_all_users()
     for user in users:
         user["_id"] = str(user["_id"])
     return {
-        "success": success,
+        "success": True,
         "users": users
     }
 
@@ -39,10 +39,10 @@ async def get_user_data(user_id: str, token: str = Header(None)) -> dict:
             headers={"WWW-Authenticate": "Bearer"},
         )
     user_id = jsonable_encoder(user_id)
-    success, user_data = await db.get_user(user_id)
+    user_data = await db.get_user(user_id)
     user_data['_id'] = str(user_data['_id'])
     return {
-        "success": success,
+        "success": True,
         "user_data": user_data
     }
 
@@ -58,10 +58,10 @@ async def add_user_data(user: User = Body(...), token: str = Header(None)) -> di
     user = jsonable_encoder(user)
     # TODO:// Remove hashing password. This should be done in signup endpoint
     user["password_hash"] = await user_auth.get_password_hash(user["password_hash"])
-    success, user_data = await db.add_user(user)
+    user_data = await db.add_user(user)
     user_data['_id'] = str(user_data["_id"])
     return {
-        "success": success,
+        "success": True,
         "user": user_data
     }
 
@@ -74,11 +74,10 @@ async def update_user_data(user: User = Body(...), token: str = Header(None)) ->
             headers={"WWW-Authenticate": "Bearer"},
         )
     user = jsonable_encoder(user)
-    success, user_data = await db.update_user(user)
+    user_data = await db.update_user(user)
     user_data['_id'] = str(user_data["_id"])
-    print(success, user_data)
     return {
-        "success": success,
+        "success": True,
         "user": user_data
     }
 
@@ -91,10 +90,10 @@ async def delete_user(user_id: str, token: str = Header(None)) -> dict:
             headers={"WWW-Authenticate": "Bearer"},
         )
     user_id = jsonable_encoder(user_id)
-    success, user_data = await db.delete_user(user_id)
+    user_data = await db.delete_user(user_id)
     user_data["_id"] = str(user_data["_id"])
     return {
-        "success": success,
+        "success": True,
         "user": user_data
     }
 
@@ -116,7 +115,7 @@ async def delete_all_users(token: str = Header(None)) -> dict:
 # TODO:// Store Token in database
 @router.post("/auth/login", response_model=Token, response_description="login user")
 async def login_user(username: str = Body(...), password: str = Body(...)):
-    success, user = await db.get_user_by_field("username", username)
+    user = await db.get_user_by_field("username", username)
     password_hash = user["password_hash"]
     result = await user_auth.authenticate_user(password, password_hash)
     if result:
@@ -131,16 +130,12 @@ async def login_user(username: str = Body(...), password: str = Body(...)):
 
 @router.post("/auth/signup", response_model=Token, response_description="login user")
 async def signup_user(user_data: User = Body(...)):
-    # Hash password
-    # Create user in db
-    # Create and return auth token
-    import requests
     user_data = jsonable_encoder(user_data)
     password = user_data['password_hash']
     password_hash = await user_auth.get_password_hash(password)
     user_data["password_hash"] = password_hash
-    success, user = await db.add_user(user_data)
-    if not success:
+    user = await db.add_user(user_data)
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Unable to signup user",

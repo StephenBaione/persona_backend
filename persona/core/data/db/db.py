@@ -25,7 +25,7 @@ async def get_all_users():
         users.append(user)
     if len(users) == 0:
         raise Exception(f"Error in getting all users")
-    return True, users
+    return users
 
 # TODO:// Update service.routes.user.py so that it checks for null.
 # Just return data as opposed to list object
@@ -33,16 +33,16 @@ async def get_user(user_id: dict):
     user = await user_collection.find_one({"_id": ObjectId(user_id)})
     if user is None:
         raise Exception(f"Error in getting user with Id={user_id}")
-    return [True, user]
+    return user
 
 async def get_user_by_field(field, value):
     user = await user_collection.find_one({field: value})
     if user is None:
         raise Exception(f"Error in finding use with {field}=={value}")
-    return [True, user]
+    return user
 
 async def get_user_field(user_id, field_name):
-    success, user = await get_user(user_id)
+    user = await get_user(user_id)
     return user[field_name] if user else None
 
 async def add_user(user_data: dict) -> dict:
@@ -50,7 +50,7 @@ async def add_user(user_data: dict) -> dict:
     new_user = await user_collection.find_one({"firstname": user_data["firstname"]})
     if new_user is None:
         raise Exception(f"Error in adding user with data={user_data}")
-    return [True, new_user]
+    return new_user
 
 async def update_user(user_data: dict) -> dict:
     # TODO:// Research motor to find a better way to do this
@@ -64,14 +64,14 @@ async def update_user(user_data: dict) -> dict:
     new_data = await user_collection.find_one({"firstname": user_data["firstname"]})
     if not check_user(old_data, new_data):
         raise Exception(f"Unable to update user {old_data}")
-    return [True, new_data]
+    return new_data
 
 async def delete_user(user_id: str) -> dict:
     user_data = await user_collection.find_one({"_id": ObjectId(user_id)})
     if not user_data:
         raise Exception(f"Error in deleting user with Id={user_id}")
     result = await user_collection.delete_one({"_id": ObjectId(user_id)})
-    return [True, user_data]
+    return user_data
 
 async def delete_all_users() -> dict:
     try:
