@@ -1,11 +1,4 @@
-from bson.objectid import ObjectId
-from motor import motor_asyncio
-
-MONGO_URL = "mongodb://127.0.0.1:27017"
-
-client = motor_asyncio.AsyncIOMotorClient(MONGO_URL)
-
-database = client.user
+from core.data.db.db import database
 
 user_collection = database.get_collection("user_collection")
 
@@ -46,7 +39,12 @@ async def get_user_field(user_id, field_name):
     return user[field_name] if user else None
 
 async def add_user(user_data: dict) -> dict:
+    user_data.setdefault("credentials", [])
+    user_data.setdefault("keychain", {})
+    user_data.setdefault("is_active", True)
+
     user = await user_collection.insert_one(user_data)
+    
     new_user = await user_collection.find_one({"firstname": user_data["firstname"]})
     if new_user is None:
         raise Exception(f"Error in adding user with data={user_data}")

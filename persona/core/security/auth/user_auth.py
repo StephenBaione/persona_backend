@@ -30,13 +30,24 @@ async def get_password_hash(password: str):
 async def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expires_in = datetime.utcnow() + expires_delta
     else:
         # Set timedelta for one week
-        expire = datetime.utcnow() + timedelta(minutes=10080)
-    to_encode.update({"exp": expire})
+        expires_in = datetime.utcnow() + timedelta(minutes=10080)
+    # Generate Refresh Token
+    # Generate Scope
+    to_encode.update({"exp": expires_in})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return {"access_token": encoded_jwt, "token_type": "bearer"}
+
+    # Token expires_in field is int
+    expires_in_ms = expires_in.microsecond * 1000
+    return {
+            "access_token": encoded_jwt,
+            "refresh_token": "",
+            "token_type": "bearer",
+            "scope": "",
+            "expires_in": expires_in_ms
+        }
 
 async def authenticate_user(password: str, password_hash: str):
     if not await verify_password(password, password_hash):
