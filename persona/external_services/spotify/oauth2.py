@@ -1,9 +1,12 @@
 from os import register_at_fork
+from fastapi import encoders
 import httpx
 
 import base64
 
 from core.data.models.auth.token import Token
+
+from external_services.spotify.controllers.spotify import SpotifyController
 # Check if user has spotify token in keychain
 # Have Token:
 #   Check if token is valid
@@ -22,10 +25,9 @@ config = {
 
 BASE_ACCOUNTS_SERVICE = "https://accounts.spotify.com"
 
-async def format_auth_header(client_id: str, client_secret: str):
+async def format_auth_header(client_id: str, client_secret: str, encoded=False):
     encoded_client_credentials = base64.b64encode(bytes(f"{client_id}:{client_secret}", 'ascii'))
     return f"Basic {encoded_client_credentials.decode('ascii')}"
-
 
 async def request_authorization(state: str = None, scope: list = None):
     endpoint = "/authorize"
@@ -60,7 +62,7 @@ async def request_access_token(code: str):
             raise Exception("Error in retrieving user token")
         return Token(**resp.json())
 
-async def request_refresh_token(token: Token):
+async def request_refresh_token(token: Token) -> Token:
     endpoint = "/api/token"
     body = {
         "grant_type": config["GRANT_TYPE_REFRESH"],

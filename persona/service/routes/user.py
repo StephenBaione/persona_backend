@@ -1,16 +1,22 @@
 from typing import Optional
-from fastapi import APIRouter, Body, HTTPException, status, Header
+
+from fastapi import APIRouter, Body, HTTPException, status, Header, Response
 from fastapi.encoders import jsonable_encoder
+from fastapi.templating import Jinja2Templates
+from requests.sessions import Request
 
 from core.data.db import db
 from core.data.models.user.model import User
 from core.data.models.auth.token import Token
+from core.data.services.user import user as UserService
 
 from core.security.auth import user_auth
 
 from service.internal.user import handle_user_auth
 
 router = APIRouter(prefix="/user", tags=["user"])
+
+templates = Jinja2Templates(directory="templates")
 
 # TODO:// Write helper function for processing db returns
 @router.get("/all", response_description="all users retrieved")
@@ -114,7 +120,7 @@ async def delete_all_users(token: str = Header(None)) -> dict:
 # TODO:// Move authentication to separate router
 # TODO:// Store Token in database
 @router.post("/auth/login", response_model=Token, response_description="login user")
-async def login_user(username: str = Body(...), password: str = Body(...)):
+async def login_user(response: Response, username: str = Body(...), password: str = Body(...)):
     user = await db.get_user_by_field("username", username)
     password_hash = user["password_hash"]
     result = await user_auth.authenticate_user(password, password_hash)
@@ -129,12 +135,12 @@ async def login_user(username: str = Body(...), password: str = Body(...)):
         )
 
 @router.post("/auth/signup", response_model=Token, response_description="login user")
-async def signup_user(user_data: User = Body(...)):
+async def signup_user(response: Response, user_data: User = Body(...)):
     user_data = jsonable_encoder(user_data)
     password = user_data['password_hash']
     password_hash = await user_auth.get_password_hash(password)
     user_data["password_hash"] = password_hash
-    user = await db.add_user(user_data)
+    user = await UserService.add_user(user_data)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -143,4 +149,5 @@ async def signup_user(user_data: User = Body(...)):
         )
     user["_id"] = str(user["_id"])
     token = await user_auth.create_access_token(user)
+
     return token

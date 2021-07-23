@@ -29,7 +29,8 @@ async def oauth2_flow_redirect(code: str, state: Optional[str] = None, error: Op
     return {
         "token": token
     }
-@router.post("/refreh", response_description="Spotify token refresh")
+    
+@router.post("/refresh", response_description="Spotify token refresh")
 async def oauth2_flow_refresh(token: Token):
     token = jsonable_encoder(token)
     new_token = await oauth2.request_refresh_token(token)
