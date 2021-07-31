@@ -12,6 +12,8 @@ from passlib.context import CryptContext
 from core.data.models.auth.token import Token
 from core.data.models.user.model import User
 
+from core.data.services.user import user as UserService
+
 from core.security.auth import oauth
 
 SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
@@ -49,6 +51,16 @@ async def create_access_token(data: dict, expires_delta: Optional[timedelta] = N
             "expires_in": expires_in_ms
         }
 
+async def get_current_user(access_token: str):
+    data = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
+    user_id = data.get("_id", None)
+    if user_id is None:
+        return None
+    user: User = await UserService.get_user(user_id)
+    return user
+
+    
+
 async def authenticate_user(password: str, password_hash: str):
     if not await verify_password(password, password_hash):
         return False
@@ -56,7 +68,7 @@ async def authenticate_user(password: str, password_hash: str):
 
 async def validate_user_access(token, cfg):
     credentials_cfg = {
-        "user_crud": ["admin"]
+        "user_crud": ["admin", "user"]
     }
     user_credentials = await oauth.get_token_credentials(token)
     if user_credentials:

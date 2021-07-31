@@ -1,9 +1,9 @@
-from typing import Optional
+from typing import Any, Optional
 
-from fastapi import APIRouter, Body, HTTPException, status, Header, Response
+from fastapi import APIRouter, Body, HTTPException, status, Header, Response, Request
 from fastapi.encoders import jsonable_encoder
+from fastapi.param_functions import Cookie
 from fastapi.templating import Jinja2Templates
-from requests.sessions import Request
 
 from core.data.db import db
 from core.data.models.user.model import User
@@ -37,7 +37,8 @@ async def get_all_user_data(token: str = Header(None)) -> dict:
 
 # TODO:// Write null checks for these methods
 @router.get("/get", response_description="user retrieved")
-async def get_user_data(user_id: str, token: str = Header(None)) -> dict:
+async def get_user_data(user_id: str, token: str = Header(None), _id: Optional[str] = Cookie(None)) -> dict:
+    print("\n\n-------- Supplied Token --------\n\n", token)
     if not await user_auth.validate_user_access(token, "user_crud"):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -45,6 +46,10 @@ async def get_user_data(user_id: str, token: str = Header(None)) -> dict:
             headers={"WWW-Authenticate": "Bearer"},
         )
     user_id = jsonable_encoder(user_id)
+    if _id:
+        print("Id is not none")
+        if _id == user_id:
+            print("Cookie is valid")
     user_data = await db.get_user(user_id)
     user_data['_id'] = str(user_data['_id'])
     return {
@@ -119,15 +124,20 @@ async def delete_all_users(token: str = Header(None)) -> dict:
 # TODO:// Make password in post requests secure
 # TODO:// Move authentication to separate router
 # TODO:// Store Token in database
-@router.post("/auth/login", response_model=Token, response_description="login user")
-async def login_user(response: Response, username: str = Body(...), password: str = Body(...)):
+@router.post("/auth/login", response_model=Any, response_description="login user")
+async def login_user(request: Request, response: Response, username: str = Body(...), password: str = Body(...)):
+    print("\n\n-------- Login --------\n\n", username, password)
     user = await db.get_user_by_field("username", username)
     password_hash = user["password_hash"]
     result = await user_auth.authenticate_user(password, password_hash)
     if result:
         user["_id"] = str(user["_id"])
         token = await user_auth.create_access_token(user)
-        return token
+        response.set_cookie("_id", user["_id"], samesite="Lax", secure=False)
+        return {
+            "token": token,
+            "_id": user["_id"]
+        }
     raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
@@ -137,6 +147,7 @@ async def login_user(response: Response, username: str = Body(...), password: st
 @router.post("/auth/signup", response_model=Token, response_description="login user")
 async def signup_user(response: Response, user_data: User = Body(...)):
     user_data = jsonable_encoder(user_data)
+    user_data.credentials.append("user")
     password = user_data['password_hash']
     password_hash = await user_auth.get_password_hash(password)
     user_data["password_hash"] = password_hash

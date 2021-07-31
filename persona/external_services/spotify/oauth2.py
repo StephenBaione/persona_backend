@@ -44,7 +44,7 @@ async def request_authorization(state: str = None, scope: list = None):
         resp = await client.get(endpoint, params=params)
         if resp.status_code != 200:
             raise Exception(f"Error requesting spotify authorization\n{resp.reason_phrase}")
-        return resp.url
+        return resp
 
 
 async def request_access_token(code: str):

@@ -1,4 +1,9 @@
+from binascii import Error
+from typing import Any
+from core.data.models.user.model import User
+from core.data.models.auth.token import Token
 from core.data.db.db import database
+from bson.objectid import ObjectId
 
 user_collection = database.get_collection("user_collection")
 
@@ -38,6 +43,10 @@ async def get_user_field(user_id, field_name):
     user = await get_user(user_id)
     return user[field_name] if user else None
 
+async def get_user_spotify_service(user_id):
+    user = await get_user(user_id)
+    
+
 async def add_user(user_data: dict) -> dict:
     user_data.setdefault("credentials", [])
     user_data.setdefault("keychain", {})
@@ -50,23 +59,36 @@ async def add_user(user_data: dict) -> dict:
         raise Exception(f"Error in adding user with data={user_data}")
     return new_user
 
-async def add_to_user_keychain(user_id: str, key: str, value: any):
+async def add_to_user_keychain(user_id: str, key: str, value: Any):
     user = await get_user(user_id)
+    if user['keychain'].get('key') != None:
+        return None
     user["keychain"][key] = value
     await update_user(user)
+
+
+async def update_user_keychain(user_id: str, key: str, value: Any):
+    user = await get_user(user_id = user_id)
+    if user['keychain'].get(key) == None:
+        return None
+    user["keychain"][key] == value
+    await update_user(user)
+    return {key: value}
+    
+
 
 async def update_user(user_data: dict) -> dict:
     # TODO:// Research motor to find a better way to do this
     def check_user(old_data: dict, new_data: dict):
         for (key, val) in old_data.items():
             if val != new_data[key]:
-                return False
-        return True
+                return True
+        return False
     old_data = await user_collection.find_one({"firstname": user_data["firstname"]})
     user = await user_collection.replace_one({"_id": old_data["_id"]}, user_data)
     new_data = await user_collection.find_one({"firstname": user_data["firstname"]})
     if not check_user(old_data, new_data):
-        raise Exception(f"Unable to update user {old_data}")
+        return old_data
     return new_data
 
 async def delete_user(user_id: str) -> dict:

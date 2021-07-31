@@ -8,6 +8,8 @@ client = motor_asyncio.AsyncIOMotorClient(MONGO_URL)
 database = client.user
 
 user_collection = database.get_collection("user_collection")
+spotify_collection = database.get_collection("spotify_collection")
+temporary_collection = database.get_collection("temporary_collection")
 
 def user_helper(user) -> dict:
     return {
